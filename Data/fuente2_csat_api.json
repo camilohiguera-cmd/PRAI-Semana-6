@@ -1,0 +1,26 @@
+{
+    "origen": "API_Global_Metrics_v2",
+    "fecha_consulta": "2026-07-21",
+    "metricas": [
+        {
+            "industria": "Retail",
+            "csat_score": 4.8,
+            "nps": 72
+        },
+        {
+            "industria": "Educaci\u00f3n",
+            "csat_score": 3.9,
+            "nps": 45
+        },
+        {
+            "industria": "Salud",
+            "csat_score": 4.2,
+            "nps": 58
+        },
+        {
+            "industria": "Transporte",
+            "csat_score": 4.5,
+            "nps": 68
+        }
+    ]
+}
