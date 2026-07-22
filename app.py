@@ -1,17 +1,18 @@
+Python
 import streamlit as st
 import pandas as pd
 import json
 import os
+import plotly.express as px
 
 # Configuración de página
 st.set_page_config(page_title="Global Insights Analytics", layout="wide")
 
 # Obtener ruta base segura
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# Cargar datos de forma segura (soporta carpeta Data o data)
 folder_name = "data" if os.path.exists(os.path.join(BASE_DIR, "data")) else "Data"
 
+# Cargar fuentes
 df_ventas = pd.read_csv(os.path.join(BASE_DIR, folder_name, "fuente1_ventas_sql.csv"))
 
 with open(os.path.join(BASE_DIR, folder_name, "fuente2_csat_api.json"), "r") as f:
@@ -19,10 +20,8 @@ with open(os.path.join(BASE_DIR, folder_name, "fuente2_csat_api.json"), "r") as 
 
 df_costos = pd.read_excel(os.path.join(BASE_DIR, folder_name, "fuente3_costos_excel.xlsx"))
 
-# Merge de DataFrames
+# Merge relacional
 df_master = df_ventas.merge(df_csat, on="industria", how="left").merge(df_costos, on="industria", how="left")
-
-import plotly.express as px
 
 # Encabezado
 st.title("📊 Global Insights Analytics — Executive Dashboard")
@@ -59,7 +58,7 @@ kpi4.metric("Índice Eficiencia", f"{efic_val:.1f}%")
 
 st.divider()
 
-# 2. Bloque de Gráficos (Organizados en Grid 2x2)
+# 2. Gráficos Originales Integrados
 col1, col2 = st.columns(2)
 
 with col1:
@@ -70,23 +69,27 @@ with col1:
     )
     st.plotly_chart(fig_bar, use_container_width=True)
 
-    st.subheader("⭐ Satisfacción (CSAT) por Industria")
-    if 'csat_score' in df_filtered.columns:
-        fig_csat = px.bar(
-            df_filtered[['industria', 'csat_score']].drop_duplicates(), 
-            x="industria", y="csat_score", color="industria"
-        )
-        st.plotly_chart(fig_csat, use_container_width=True)
+    st.subheader("⭐ Satisfacción (CSAT) vs NPS")
+    df_metrics = df_filtered[['industria', 'csat_score', 'nps']].drop_duplicates()
+    fig_csat_nps = px.bar(
+        df_metrics, 
+        x="industria", y=["csat_score", "nps"], 
+        barmode="group",
+        labels={"value": "Puntaje", "variable": "Métrica"}
+    )
+    st.plotly_chart(fig_csat_nps, use_container_width=True)
 
 with col2:
     st.subheader("🌍 Distribución de Ventas por Región")
     fig_pie = px.pie(df_filtered, names="region", values="monto_usd", hole=0.4)
     st.plotly_chart(fig_pie, use_container_width=True)
 
-    st.subheader("⚡ Eficiencia Operativa por Industria")
-    if 'indice_eficiencia' in df_filtered.columns:
-        fig_efic = px.bar(
-            df_filtered[['industria', 'indice_eficiencia']].drop_duplicates(), 
-            x="industria", y="indice_eficiencia", color="industria"
-        )
-        st.plotly_chart(fig_efic, use_container_width=True)
+    st.subheader("⚡ Eficiencia vs Costo Operativo")
+    df_scatter_data = df_filtered[['industria', 'costo_operativo_k', 'indice_eficiencia']].drop_duplicates()
+    fig_scatter = px.scatter(
+        df_scatter_data, 
+        x="costo_operativo_k", y="indice_eficiencia", 
+        color="industria", size="costo_operativo_k",
+        labels={"costo_operativo_k": "Costo Operativo (k USD)", "indice_eficiencia": "Índice Eficiencia (%)"}
+    )
+    st.plotly_chart(fig_scatter, use_container_width=True)
